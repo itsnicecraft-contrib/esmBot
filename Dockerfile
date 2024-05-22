@@ -57,7 +57,7 @@ FROM base
 COPY --from=prod-deps /app/node_modules /app/node_modules
 COPY --from=build /app/build/Release /app/build/Release
 COPY --from=build /built /usr
-RUN rm .env
+RUN if [ -f ".env" ]; then rm.env; fi
 
 RUN mkdir /app/help && chmod 777 /app/help
 RUN mkdir /app/temp && chmod 777 /app/temp
