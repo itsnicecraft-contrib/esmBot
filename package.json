@@ -1,6 +1,6 @@
 {
   "name": "esmbot",
-  "version": "2024.5.0",
+  "version": "2024.6.0",
   "description": "A Discord bot with miscellaneous features",
   "exports": "./app.js",
   "bin": "./app.js",
@@ -34,13 +34,14 @@
     "emoji-regex": "^10.3.0",
     "file-type": "^19.0.0",
     "format-duration": "^3.0.2",
+    "ipaddr.js": "^2.2.0",
     "node-addon-api": "^8.0.0",
     "oceanic.js": "1.10.4",
     "postgres": "^3.4.4",
     "shoukaku": "^4.0.1",
     "winston": "^3.13.0",
     "winston-daily-rotate-file": "^5.0.0",
-    "ws": "^8.16.0",
+    "ws": "^8.17.1",
     "zlib-sync": "^0.1.9"
   },
   "devDependencies": {
@@ -49,6 +50,7 @@
     "@babel/eslint-plugin": "^7.23.5",
     "@babel/plugin-transform-class-properties": "^7.24.1",
     "@biomejs/biome": "1.6.4",
+    "@types/bun": "^1.1.0",
     "@types/ws": "^8.5.10",
     "cmake-js": "^7.3.0",
     "eslint": "^9.1.0",
@@ -62,5 +64,5 @@
       7
     ]
   },
-  "packageManager": "pnpm@8.12.1"
+  "packageManager": "pnpm@9.4.0"
 }

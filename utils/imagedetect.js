@@ -1,5 +1,6 @@
 import { AttachmentFlags, PrivateChannel, TextableChannel, ThreadChannel } from "oceanic.js";
 import { getType } from "./image.js";
+import logger from "./logger.js";
 
 const tenorURLs = [
   "tenor.com",
@@ -40,7 +41,8 @@ const videoFormats = ["video/mp4", "video/webm", "video/mov"];
  * @returns {Promise<{ path: string; type?: string; url: string; name: string; spoiler: boolean; } | undefined>}
  */
 const getImage = async (image, image2, video, spoiler = false, extraReturnTypes = false, type = null) => {
-  const fileNameSplit = new URL(image).pathname.split("/");
+  const imageURL = new URL(image);
+  const fileNameSplit = imageURL.pathname.split("/");
   const fileName = fileNameSplit[fileNameSplit.length - 1];
   const fileNameNoExtension = fileName.slice(0, fileName.lastIndexOf("."));
   const payload = {
@@ -61,6 +63,8 @@ const getImage = async (image, image2, video, spoiler = false, extraReturnTypes 
         } else if (image2.endsWith(".gif")) {
           const redirect = (await fetch(image2, { method: "HEAD", redirect: "manual" })).headers.get("location");
           id = redirect?.split("-").pop();
+        } else {
+          return;
         }
         const data = await fetch(`https://tenor.googleapis.com/v2/posts?ids=${id}&media_filter=gif&limit=1&client_key=esmBot%20${process.env.ESMBOT_VER}&key=${process.env.TENOR}`);
         if (data.status === 429) {
@@ -82,12 +86,12 @@ const getImage = async (image, image2, video, spoiler = false, extraReturnTypes 
       payload.path = `https://media0.giphy.com/media/${image2.split("/")[4]}/giphy.gif`;
     }
     payload.type = "image/gif";
-  } else if (video) {
-    payload.type = type ?? await getType(payload.path, extraReturnTypes);
-    if (!payload.type || (!videoFormats.includes(payload.type) && !imageFormats.includes(payload.type))) return;
   } else {
-    payload.type = type ?? await getType(payload.path, extraReturnTypes);
-    if (!payload.type || !imageFormats.includes(payload.type)) return;
+    const result = await getType(imageURL, extraReturnTypes);
+    if (!result) return;
+    if (result.url) payload.path = result.url;
+    payload.type = type ?? result.type;
+    if (!payload.type || ((video ? !videoFormats.includes(payload.type) : true) && !imageFormats.includes(payload.type))) return;
   }
   return payload;
 };
@@ -170,7 +174,9 @@ export default async (client, cmdMessage, interaction, options, extraReturnTypes
   }
   if (!singleMessage && (cmdMessage || interaction?.authorizingIntegrationOwners?.[0] !== undefined)) {
     // if there aren't any replies or interaction attachments then iterate over the last few messages in the channel
-    const channel = (interaction ? interaction : cmdMessage).channel ?? await client.rest.channels.get((interaction ? interaction : cmdMessage).channelID);
+    const channel = (interaction ? interaction : cmdMessage)?.channel ?? await client.rest.channels.get((interaction ? interaction : cmdMessage).channelID).catch(e => {
+      logger.warn(`Failed to get a text channel: ${e}`);
+    });
     if (!(channel instanceof TextableChannel) && !(channel instanceof ThreadChannel) && !(channel instanceof PrivateChannel)) return;
     const perms = (channel instanceof TextableChannel || channel instanceof ThreadChannel) ? channel.permissionsOf?.(client.user.id) : null;
     if (perms && !perms.has("VIEW_CHANNEL")) return;

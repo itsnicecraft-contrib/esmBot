@@ -4,7 +4,7 @@ import { runImageJob } from "../utils/image.js";
 import { runningCommands } from "../utils/collections.js";
 import { clean, isEmpty, random } from "../utils/misc.js";
 import { selectedImages } from "../utils/collections.js";
-import messages from "../config/messages.json" assert { type: "json" };
+import messages from "../config/messages.json" with { type: "json" };
 import { Constants, CommandInteraction } from "oceanic.js";
 
 class ImageCommand extends Command {
@@ -155,11 +155,15 @@ class ImageCommand extends Command {
         description: "An image/GIF URL"
       });
     }
+    if (!this.alwaysGIF) {
+      this.flags.push({
+        name: "togif",
+        type: Constants.ApplicationCommandOptionTypes.BOOLEAN,
+        description: "Force GIF output"
+      })
+    }
+
     this.flags.push({
-      name: "togif",
-      type: Constants.ApplicationCommandOptionTypes.BOOLEAN,
-      description: "Force GIF output"
-    }, {
       name: "spoiler",
       type: Constants.ApplicationCommandOptionTypes.BOOLEAN,
       description: "Attempt to send output as a spoiler"
@@ -177,6 +181,7 @@ class ImageCommand extends Command {
   static requiresText = false;
   static textOptional = false;
   static requiresGIF = false;
+  static alwaysGIF = false;
   static noImage = "You need to provide an image/GIF!";
   static noText = "You need to provide some text!";
   static empty = "The resulting output was empty!";
