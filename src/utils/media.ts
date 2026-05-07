@@ -126,22 +126,33 @@ export async function request(
     if (!res.body) return;
 
     stream = await fileTypeStream(res.body, { sampleSize: 1024 });
-    if (!stream.fileType?.mime) return;
+    if (!stream.fileType?.mime) {
+      await stream.cancel();
+      return;
+    }
   } finally {
     clearTimeout(timeout);
   }
 
   if (
     ![...(typeMedia.length === 0 ? formats.image : typeMedia.flatMap((v) => formats[v]))].includes(stream.fileType.mime)
-  )
+  ) {
+    await stream.cancel();
     return;
+  }
 
   const mediaType = stream.fileType.mime.split("/")[0] as MediaTypes;
-  if (!typeMedia.includes(mediaType)) return;
+  if (!typeMedia.includes(mediaType)) {
+    await stream.cancel();
+    return;
+  }
 
   const type = stream.fileType.mime;
   const ext = stream.fileType.ext;
-  if (typeOnly) return { url, type, ext, mediaType };
+  if (typeOnly) {
+    await stream.cancel();
+    return { url, type, ext, mediaType };
+  }
 
   const reader = stream.getReader();
   const bufs: Uint8Array[] = [];
@@ -157,13 +168,16 @@ export async function request(
     if (size && bufSize >= size) break;
 
     if (bufSize > 41943040) {
+      await stream.cancel();
       // 40 MB
       throw "large";
     }
   }
 
+  if (!stream.locked) await stream.cancel();
+
   const buf = Buffer.concat(bufs);
-  return { buf: buf, ext, url, type, mediaType };
+  return { buf, ext, url, type, mediaType };
 }
 
 function connect(server: string, auth: string | undefined, name: string | undefined, tls?: boolean) {
