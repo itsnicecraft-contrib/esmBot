@@ -26,7 +26,8 @@ class MediaStatsCommand extends Command {
     embed.embeds[0].fields = [];
     let i = 0;
     for (const connection of connections.values()) {
-      const count = await connection.getCount();
+      const count = await connection.getCount().catch(() => {});
+      if (!count) continue;
       embed.embeds[0].fields.push({
         name: this.getString("commands.responses.mediastats.server", {
           params: { num: (connection.name ? `${i++} (${connection.name})` : i++).toString() },
