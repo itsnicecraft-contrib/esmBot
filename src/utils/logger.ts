@@ -1,6 +1,5 @@
 import process from "node:process";
 import winston from "winston";
-import "winston-daily-rotate-file";
 
 const logger = winston.createLogger({
   levels: {
@@ -15,17 +14,17 @@ const logger = winston.createLogger({
       format: winston.format.colorize({ all: true }),
       stderrLevels: ["error", "warn"],
     }),
-    new winston.transports.DailyRotateFile({
+    new winston.transports.File({
       filename: "logs/error-%DATE%.log",
       level: "error",
       zippedArchive: true,
-      maxSize: 4194304,
+      maxsize: 4194304,
       maxFiles: 8,
     }),
-    new winston.transports.DailyRotateFile({
+    new winston.transports.File({
       filename: "logs/main-%DATE%.log",
       zippedArchive: true,
-      maxSize: 4194304,
+      maxsize: 4194304,
       maxFiles: 8,
     }),
   ],
