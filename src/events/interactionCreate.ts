@@ -11,9 +11,10 @@ import { clean } from "#utils/misc.js";
 import { upload } from "#utils/tempimages.js";
 import type { EventParams } from "#utils/types.js";
 
-let Sentry: typeof import("@sentry/node");
+let Sentry: typeof import("@sentry/node-core");
 if (process.env.SENTRY_DSN && process.env.SENTRY_DSN !== "") {
-  Sentry = await import(`@sentry/${detectRuntime().type}`);
+  const { type } = detectRuntime();
+  Sentry = await import(`@sentry/${type === "node" ? "node-core/light" : type}`);
 }
 
 /**
