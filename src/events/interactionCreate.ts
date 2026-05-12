@@ -9,7 +9,7 @@ import logger from "#utils/logger.js";
 import { clean } from "#utils/misc.js";
 import type { EventParams } from "#utils/types.js";
 
-let Sentry: typeof import("@sentry/node-core");
+let Sentry: typeof import("@sentry/node-core") | undefined;
 if (process.env.SENTRY_DSN && process.env.SENTRY_DSN !== "") {
   const { type } = detectRuntime();
   Sentry = await import(`@sentry/${type === "node" ? "node-core/light" : type}`);
@@ -85,14 +85,13 @@ export default async ({ client, database }: EventParams, interaction: AnyInterac
     await commandClass.finalize(res?.message);
   } catch (e) {
     const error = e as Error;
-    if (process.env.SENTRY_DSN && process.env.SENTRY_DSN !== "")
-      Sentry.captureException(error, {
-        tags: {
-          process: process.env.pm_id ? Number.parseInt(process.env.pm_id) - 1 : 0,
-          cmdName,
-          args: JSON.stringify(interaction.data.options.raw),
-        },
-      });
+    Sentry?.captureException(error, {
+      tags: {
+        process: process.env.pm_id ? Number.parseInt(process.env.pm_id) - 1 : 0,
+        cmdName,
+        args: JSON.stringify(interaction.data.options.raw),
+      },
+    });
     if (error.toString().includes("Request entity too large")) {
       await interaction.createFollowup({
         content: getString("image.tooLarge", { locale: interaction.locale }),

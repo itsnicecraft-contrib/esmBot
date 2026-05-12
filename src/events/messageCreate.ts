@@ -10,7 +10,7 @@ import { clean } from "#utils/misc.js";
 import parseCommand from "#utils/parseCommand.js";
 import type { DBGuild, EventParams } from "#utils/types.js";
 
-let Sentry: typeof import("@sentry/node-core");
+let Sentry: typeof import("@sentry/node-core") | undefined;
 if (process.env.SENTRY_DSN && process.env.SENTRY_DSN !== "") {
   const { type } = detectRuntime();
   Sentry = await import(`@sentry/${type === "node" ? "node-core/light" : type}`);
@@ -191,14 +191,13 @@ export default async ({ client, database }: EventParams, message: Message) => {
     await commandClass.finalize(res);
   } catch (e) {
     const error = e as Error;
-    if (process.env.SENTRY_DSN && process.env.SENTRY_DSN !== "")
-      Sentry.captureException(error, {
-        tags: {
-          process: process.env.pm_id ? Number.parseInt(process.env.pm_id) - 1 : 0,
-          command,
-          args: JSON.stringify(preArgs),
-        },
-      });
+    Sentry?.captureException(error, {
+      tags: {
+        process: process.env.pm_id ? Number.parseInt(process.env.pm_id) - 1 : 0,
+        command,
+        args: JSON.stringify(preArgs),
+      },
+    });
     if (error.toString().includes("Request entity too large")) {
       await client.rest.channels.createMessage(
         message.channelID,
