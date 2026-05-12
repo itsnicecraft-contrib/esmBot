@@ -23,13 +23,7 @@ type FileStats = {
 let dirSizeCache: number;
 let threshold: number | undefined;
 
-export async function upload(
-  client: Client,
-  result: { flags?: number } & File,
-  context: CommandInteraction | Message,
-  success = true,
-  save = false,
-) {
+export async function upload(client: Client, result: File & { flags?: number }, context: CommandInteraction | Message) {
   const filename = `${Math.random().toString(36).substring(2, 15)}.${result.name.split(".")[1]}`;
   await writeFile(`${process.env.TEMPDIR}/${filename}`, result.contents);
   const imageURL = `${process.env.TMP_DOMAIN || "https://tmp.esmbot.net"}/${filename}`;
@@ -51,12 +45,21 @@ export async function upload(
         })}`,
       },
     ],
-    flags: (result.flags ?? (success ? 0 : 64)) | Constants.MessageFlags.IS_COMPONENTS_V2,
+    flags: (result.flags ?? 0) | Constants.MessageFlags.IS_COMPONENTS_V2,
   };
   let authorId: string;
   if (context instanceof CommandInteraction) {
     authorId = context.user.id;
     await context.createFollowup(payload);
+
+    // save media if used outside of guild/dms
+    if (context.authorizingIntegrationOwners[0] === undefined) {
+      const type = await request(new URL(imageURL), [], true).catch(() => {});
+      selectedImages.set(authorId, {
+        path: type?.url ?? imageURL,
+        spoiler: result.name.startsWith("SPOILER_"),
+      });
+    }
   } else {
     authorId = context.author.id;
     await client.rest.channels.createMessage(
@@ -74,13 +77,7 @@ export async function upload(
       }),
     );
   }
-  if (save) {
-    const type = await request(new URL(imageURL), [], true).catch(() => {});
-    selectedImages.set(authorId, {
-      path: type?.url ?? imageURL,
-      spoiler: result.name.startsWith("SPOILER_"),
-    });
-  }
+
   if (threshold) {
     const size = dirSizeCache + result.contents.length;
     dirSizeCache = size;

@@ -136,6 +136,11 @@ class Command {
     return this.getString(`commands.responses.${this.cmdName}.invalid`);
   }
 
+  /**
+   * The function to run after sending the output.
+   */
+  async finalize(_res?: Message) {}
+
   async acknowledge() {
     if (this.type === "classic" && this.message) {
       await this.client.rest.channels.sendTyping(this.message.channelID);

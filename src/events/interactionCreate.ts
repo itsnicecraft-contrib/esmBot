@@ -2,13 +2,11 @@ import { Buffer } from "node:buffer";
 import process from "node:process";
 import type { AnyInteractionGateway } from "oceanic.js";
 import Command from "#cmd-classes/command.js";
-import MediaCommand from "#cmd-classes/mediaCommand.js";
-import { collectors, commands, messageCommands, selectedImages, userCommands } from "#utils/collections.js";
+import { collectors, commands, messageCommands, userCommands } from "#utils/collections.js";
 import detectRuntime from "#utils/detectRuntime.js";
 import { getString } from "#utils/i18n.js";
 import logger from "#utils/logger.js";
 import { clean } from "#utils/misc.js";
-import { upload } from "#utils/tempimages.js";
 import type { EventParams } from "#utils/types.js";
 
 let Sentry: typeof import("@sentry/node-core");
@@ -64,69 +62,27 @@ export default async ({ client, database }: EventParams, interaction: AnyInterac
   try {
     const commandClass = new cmd(client, database, { type: "application", interaction });
     const result = await commandClass.run();
+
+    let res;
     if (typeof result === "string") {
-      await interaction.createFollowup({
+      res = await interaction.createFollowup({
         content: result,
         flags: commandClass.success ? 0 : 64,
       });
     } else if (typeof result === "object") {
-      if (commandClass instanceof MediaCommand && result.files) {
-        const fileSize = interaction.attachmentSizeLimit;
-        const file = result.files[0];
-        if (file.contents.length > fileSize) {
-          if (process.env.TEMPDIR && process.env.TEMPDIR !== "" && interaction.appPermissions.has("EMBED_LINKS")) {
-            await upload(
-              client,
-              { ...file, flags: result.flags },
-              interaction,
-              commandClass.success,
-              interaction.authorizingIntegrationOwners[0] === undefined,
-            );
-          } else {
-            await interaction.createFollowup({
-              content: getString("image.noTempServer", { locale: interaction.locale }),
-              flags: 64,
-            });
-          }
-        } else {
-          const imgMessage = await interaction.createFollowup({
-            flags: result.flags ?? (commandClass.success ? 0 : 64),
-            files: [file],
-          });
-          if (interaction.authorizingIntegrationOwners[0] === undefined) {
-            const attachment = imgMessage.message.attachments.first();
-            if (attachment) {
-              const path = new URL(attachment.proxyURL);
-              path.searchParams.set("animated", "true");
-              selectedImages.set(interaction.user.id, {
-                path: path.toString(),
-                spoiler: attachment.filename.startsWith("SPOILER_"),
-              });
-            }
-          }
-        }
-      } else {
-        await interaction.createFollowup(
-          Object.assign(
-            {
-              flags: result.flags ?? (commandClass.success ? 0 : 64),
-            },
-            result,
-          ),
-        );
-      }
-    } else {
-      logger.debug(`Unknown return type for command ${cmdName}: ${result} (${typeof result})`);
-      if (!result) return;
-      await interaction.createFollowup(
+      res = await interaction.createFollowup(
         Object.assign(
           {
-            flags: commandClass.success ? 0 : 64,
+            flags: result.flags ?? (commandClass.success ? 0 : 64),
           },
           result,
         ),
       );
+    } else {
+      logger.debug(`Unknown return type for command ${cmdName}: ${result} (${typeof result})`);
     }
+
+    await commandClass.finalize(res?.message);
   } catch (e) {
     const error = e as Error;
     if (process.env.SENTRY_DSN && process.env.SENTRY_DSN !== "")

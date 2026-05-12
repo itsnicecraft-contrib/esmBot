@@ -2,7 +2,7 @@ import { execFile as baseExecFile } from "node:child_process";
 import process from "node:process";
 import util, { promisify } from "node:util";
 import { type DotenvParseOutput, config } from "dotenv";
-import type { AnyChannel, AnyPrivateChannel, Client, CommandInteraction, Message } from "oceanic.js";
+import type { AnyChannel, AnyPrivateChannel, Client, CommandInteraction, Guild, Message } from "oceanic.js";
 import commandsConfig from "#config/commands.json" with { type: "json" };
 import messagesConfig from "#config/messages.json" with { type: "json" };
 import packageJson from "../../package.json" with { type: "json" };
@@ -296,4 +296,17 @@ export function safeBigInt(input: string | number | bigint | boolean) {
   } catch {
     return -1;
   }
+}
+
+export function maxFileSize(guild: Guild | null) {
+  let fileSize = 10485760;
+  switch (guild?.premiumTier) {
+    case 2:
+      fileSize = 52428800;
+      break;
+    case 3:
+      fileSize = 104857600;
+      break;
+  }
+  return fileSize;
 }

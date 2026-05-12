@@ -12,9 +12,11 @@ import messages from "#config/messages.json" with { type: "json" };
 import { runningCommands, selectedImages } from "#utils/collections.js";
 import { convFlagType } from "#utils/handler.js";
 import { getAllLocalizations } from "#utils/i18n.js";
+import logger from "#utils/logger.js";
 import { runMediaJob } from "#utils/media.js";
 import mediaDetect from "#utils/mediadetect.js";
-import { clean, isEmpty, random } from "#utils/misc.js";
+import { clean, isEmpty, maxFileSize, random } from "#utils/misc.js";
+import { upload } from "#utils/tempimages.js";
 import type { ExtendedConstructedCommandOptions, MediaParams, MediaMeta, MediaTypes } from "#utils/types.js";
 import Command from "./command.ts";
 
@@ -157,21 +159,40 @@ class MediaCommand extends Command {
       if (type === "nomedia")
         return `${this.getString(`commands.noImage.${this.cmdName}`, { returnNull: true }) || this.getString("image.noImage", { returnNull: true }) || staticProps.noImage} ${this.getString("image.tip", { params: { name: this.client.user.globalName ?? this.client.user.username } })}`;
       if (type === "empty") return staticProps.empty;
+
       this.success = true;
-      if (type === "text")
+      const flags = ephemeral ? 64 : undefined;
+
+      if (type === "text") {
         return {
           content: `\`\`\`\n${clean(buffer.toString("utf8"), [], true)}\n\`\`\``,
-          flags: ephemeral ? 64 : undefined,
+          flags,
         };
-      return {
-        files: [
-          {
-            contents: buffer,
-            name: `${spoiler || result.spoiler ? "SPOILER_" : ""}${staticProps.command}.${type}`,
-          },
-        ],
-        flags: ephemeral ? 64 : undefined,
+      }
+
+      const file = {
+        contents: buffer,
+        name: `${spoiler || result.spoiler ? "SPOILER_" : ""}${staticProps.command}.${type}`,
       };
+      if (buffer.length > (this.interaction?.attachmentSizeLimit ?? maxFileSize(this.guild))) {
+        if (process.env.TEMPDIR && process.env.TEMPDIR !== "" && this.permissions.has("EMBED_LINKS")) {
+          if (this.interaction) {
+            await upload(this.client, { ...file, flags }, this.interaction);
+          } else if (this.message) {
+            await upload(this.client, { ...file, flags }, this.message);
+          }
+        } else {
+          return {
+            content: this.getString("image.noTempServer"),
+            flags: 64,
+          };
+        }
+      } else {
+        return {
+          files: [file],
+          flags,
+        };
+      }
     } catch (e) {
       const err = e as Error;
       if (err.toString().includes("media_not_working")) return this.getString("image.notWorking");
@@ -182,12 +203,21 @@ class MediaCommand extends Command {
       if (err.toString().includes("No available servers")) return this.getString("image.noServers");
       throw err;
     } finally {
-      try {
-        if (status) await status.delete();
-      } catch {
-        // no-op
-      }
+      if (status) await status.delete().catch((e) => logger.warn(`Failed to delete status message: ${e}`));
       runningCommands.delete(this.author?.id);
+    }
+  }
+
+  async finalize(res?: Message) {
+    if (!this.interaction || !res) return;
+    const attachment = res.attachments.first();
+    if (attachment) {
+      const path = new URL(attachment.proxyURL);
+      path.searchParams.set("animated", "true");
+      selectedImages.set(this.interaction.user.id, {
+        path: path.toString(),
+        spoiler: attachment.filename.startsWith("SPOILER_"),
+      });
     }
   }
 
