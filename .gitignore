@@ -135,6 +135,10 @@ bot-help/
 # Kate stuff
 *.kate*
 
+# Zed/Gram stuff
+.zed/
+.gram/
+
 # Typescript outputs
 dist/
 
