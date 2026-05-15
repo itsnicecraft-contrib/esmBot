@@ -142,6 +142,7 @@ const client = new Client({
   },
   rest: {
     baseURL: process.env.REST_PROXY && process.env.REST_PROXY !== "" ? process.env.REST_PROXY : undefined,
+    requestTimeout: Number(process.env.REST_TIMEOUT_MS) || 15000,
   },
   collectionLimits: {
     messages: 50,

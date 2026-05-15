@@ -391,9 +391,12 @@ async function finishJob(data: JobOutput, job: MiniJob, object: MediaParams, ws:
       `${jobObject.spoiler || object.spoiler ? "SPOILER_" : ""}${object.cmd}.${jobObject.ext}`,
     );
     const controller = new AbortController();
-    const timeout = setTimeout(() => {
-      controller.abort();
-    }, 15000);
+    const timeout = setTimeout(
+      () => {
+        controller.abort();
+      },
+      Number(process.env.REST_TIMEOUT_MS) || 15000,
+    );
     try {
       const res = await fetch(`${discordBaseURL}/webhooks/${clientID}/${object.token}`, {
         method: "POST",
