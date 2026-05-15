@@ -49,6 +49,7 @@ import { endBroadcast, exit, getVers, initLog, startBroadcast } from "#utils/mis
 import { connect, connected, reload } from "#utils/soundplayer.js";
 import { parseThreshold } from "#utils/tempimages.js";
 import { init as dbInit } from "./database.ts";
+import events from "./events/index.ts";
 
 const intents = [Constants.Intents.GUILD_VOICE_STATES, Constants.Intents.DIRECT_MESSAGES, Constants.Intents.GUILDS];
 if (commandConfig.types.classic) {
@@ -153,15 +154,12 @@ const client = new Client({
 });
 
 // register events
-logger.log("info", "Attempting to load events...");
-for await (const file of glob(resolve(basePath, "events", runtime.tsLoad ? "*.{js,ts}" : "*.js"))) {
-  logger.log("main", `Loading event from ${file}...`);
-  const eventArray = file.split("/");
-  const eventName = eventArray[eventArray.length - 1].split(".")[0];
-  const { default: event } = await import(file);
-  client.on(eventName as keyof ClientEvents, event.bind(null, { client, database }));
+logger.log("info", "Registering events...");
+for (const [name, event] of Object.entries(events)) {
+  logger.log("main", `Registering ${name} event...`);
+  client.on(name as keyof ClientEvents, (event as Function).bind(null, { client, database }));
 }
-logger.log("info", "Finished loading events.");
+logger.log("info", "Registered events.");
 
 // PM2-specific handling
 if (process.env.CLUSTER_TYPE === "pm2") {
