@@ -32,8 +32,8 @@ const combined = [...tenorURLs, ...giphyURLs, ...giphyMediaURLs, ...klipyURLs];
 
 const providerUrls = ["https://tenor.co", "https://tenor.com", "https://giphy.com", "https://klipy.com"];
 
-const discordCDNDomains = ["cdn.discordapp.com", "media.discordapp.net"];
-const discordProxyDomains = ["images-ext-1.discordapp.net", "images-ext-2.discordapp.net"];
+const discordRegex = /\w+\.discordapp\.(com|net)$/;
+const attachmentRegex = /^\/(?:ephemeral-)?attachments\/\d+\/\d+\//;
 
 type KlipyMediaObject = {
   url: string;
@@ -140,16 +140,11 @@ async function getMedia(
       payload.path = `https://media0.giphy.com/media/${media2.split("/")[4]}/giphy.webp`;
     }
   } else {
-    if (
-      discordCDNDomains.includes(mediaURL.host) &&
-      mediaURL.pathname.match(/^\/(?:ephemeral-)?attachments\/\d+\/\d+\//)
-    ) {
-      if (client && isAttachmentExpired(mediaURL)) {
+    if (discordRegex.test(mediaURL.host)) {
+      if (mediaURL.pathname.match(attachmentRegex) && client && isAttachmentExpired(mediaURL)) {
         const refreshed = await client.rest.misc.refreshAttachmentURLs([media]);
         mediaURL = new URL(refreshed.refreshedURLs[0].refreshed);
       }
-      mediaURL.searchParams.set("animated", "true");
-    } else if (discordProxyDomains.includes(mediaURL.host) && mediaURL.pathname.match(/^\/external\/[\w-]+\//)) {
       mediaURL.searchParams.set("animated", "true");
     }
     payload.path = mediaURL.toString();
