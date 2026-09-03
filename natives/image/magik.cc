@@ -47,7 +47,7 @@ CmdOutput esmb::Image::Magik([[maybe_unused]] const string &type, string &outTyp
 
   size_t dataSize = blob.length();
 
-  char *data = reinterpret_cast<char *>(malloc(dataSize));
+  char *data = static_cast<char *>(malloc(dataSize));
   memcpy(data, blob.data(), dataSize);
 
   return {data, dataSize};

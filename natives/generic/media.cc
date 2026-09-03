@@ -70,28 +70,28 @@ void esmb_media_init() {
   return;
 }
 
-esmb_media_args *esmb_media_create_args() { return reinterpret_cast<esmb_media_args *>(new esmb::ArgumentMap); }
+esmb_media_args *esmb_media_create_args() { return static_cast<esmb_media_args *>(new esmb::ArgumentMap); }
 
 // todo: find a way to combine these
 void esmb_media_add_string_arg(esmb_media_args *args, char *key, char *value) {
-  reinterpret_cast<esmb::ArgumentMap *>(args)->insert(std::make_pair(key, value));
+  static_cast<esmb::ArgumentMap *>(args)->insert(std::make_pair(key, value));
 }
 
 void esmb_media_add_float_arg(esmb_media_args *args, char *key, float value) {
-  reinterpret_cast<esmb::ArgumentMap *>(args)->insert(std::make_pair(key, value));
+  static_cast<esmb::ArgumentMap *>(args)->insert(std::make_pair(key, value));
 }
 
 void esmb_media_add_int_arg(esmb_media_args *args, char *key, int value) {
-  reinterpret_cast<esmb::ArgumentMap *>(args)->insert(std::make_pair(key, value));
+  static_cast<esmb::ArgumentMap *>(args)->insert(std::make_pair(key, value));
 }
 
 void esmb_media_add_bool_arg(esmb_media_args *args, char *key, bool value) {
-  reinterpret_cast<esmb::ArgumentMap *>(args)->insert(std::make_pair(key, value));
+  static_cast<esmb::ArgumentMap *>(args)->insert(std::make_pair(key, value));
 }
 
 esmb_media_result *esmb_media_process(const char *command, void *args, const char *type, const char *out_type,
                                       const char *data, size_t length) {
-  esmb::ArgumentMap arguments = *reinterpret_cast<esmb::ArgumentMap *>(args);
+  esmb::ArgumentMap arguments = *static_cast<esmb::ArgumentMap *>(args);
 
   return esmb_media_process(command, arguments, type, out_type, data, length);
 }

@@ -31,7 +31,7 @@ CmdOutput esmb::Image::Reverse([[maybe_unused]] const string &type, string &outT
   // this command is useless with single-page images
   if (nPages < 2) {
     size_t dataSize = bufferLength;
-    char *data = reinterpret_cast<char *>(malloc(bufferLength));
+    char *data = static_cast<char *>(malloc(bufferLength));
     memcpy(data, bufferdata, bufferLength);
 
     return {data, dataSize};

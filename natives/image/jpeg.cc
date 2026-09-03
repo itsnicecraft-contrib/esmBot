@@ -65,7 +65,7 @@ CmdOutput esmb::Image::Jpeg(const string &type, string &outType, const char *buf
       free(jpgBuf);
     } else {
       outType = "jpg";
-      buf = reinterpret_cast<char *>(jpgBuf);
+      buf = static_cast<char *>(jpgBuf);
     }
   }
 

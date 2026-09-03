@@ -91,7 +91,7 @@ CmdOutput esmb::Image::QrRead([[maybe_unused]] const string &type, string &outTy
 #endif
   size_t dataSize = resultText.length();
 
-  char *data = reinterpret_cast<char *>(malloc(dataSize));
+  char *data = static_cast<char *>(malloc(dataSize));
   memcpy(data, resultText.c_str(), dataSize);
 
   outType = "text";

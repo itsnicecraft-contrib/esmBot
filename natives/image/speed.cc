@@ -52,7 +52,7 @@ CmdOutput esmb::Image::Speed([[maybe_unused]] const string &type, [[maybe_unused
 
   size_t dataSize = 0;
 
-  char *fileData = reinterpret_cast<char *>(malloc(bufferLength));
+  char *fileData = static_cast<char *>(malloc(bufferLength));
   memcpy(fileData, bufferdata, bufferLength);
 
   if (type == "gif") {
@@ -62,23 +62,23 @@ CmdOutput esmb::Image::Speed([[maybe_unused]] const string &type, [[maybe_unused
     bool removeFrames = false;
     char *lastPos;
 
-    lastPos = reinterpret_cast<char *>(memchr(fileData, '\x00', bufferLength));
+    lastPos = static_cast<char *>(memchr(fileData, '\x00', bufferLength));
     while (lastPos != NULL) {
       if (memcmp(lastPos, match, 4) != 0) {
-        lastPos = reinterpret_cast<char *>(memchr(lastPos + 1, '\x00', (bufferLength - (lastPos - fileData)) - 1));
+        lastPos = static_cast<char *>(memchr(lastPos + 1, '\x00', (bufferLength - (lastPos - fileData)) - 1));
         continue;
       }
       uint16_t old_delay;
       memcpy(&old_delay, lastPos + 5, 2);
       old_delays.push_back(old_delay);
-      lastPos = reinterpret_cast<char *>(memchr(lastPos + 1, '\x00', (bufferLength - (lastPos - fileData)) - 1));
+      lastPos = static_cast<char *>(memchr(lastPos + 1, '\x00', (bufferLength - (lastPos - fileData)) - 1));
     }
 
     int currentFrame = 0;
-    lastPos = reinterpret_cast<char *>(memchr(fileData, '\x00', bufferLength));
+    lastPos = static_cast<char *>(memchr(fileData, '\x00', bufferLength));
     while (lastPos != NULL) {
       if (memcmp(lastPos, match, 4) != 0) {
-        lastPos = reinterpret_cast<char *>(memchr(lastPos + 1, '\x00', (bufferLength - (lastPos - fileData)) - 1));
+        lastPos = static_cast<char *>(memchr(lastPos + 1, '\x00', (bufferLength - (lastPos - fileData)) - 1));
         continue;
       }
       uint16_t new_delay = slow ? old_delays[currentFrame] * speed : old_delays[currentFrame] / speed;
@@ -89,7 +89,7 @@ CmdOutput esmb::Image::Speed([[maybe_unused]] const string &type, [[maybe_unused
 
       memset16(lastPos + 5, new_delay, 1);
 
-      lastPos = reinterpret_cast<char *>(memchr(lastPos + 1, '\x00', (bufferLength - (lastPos - fileData)) - 1));
+      lastPos = static_cast<char *>(memchr(lastPos + 1, '\x00', (bufferLength - (lastPos - fileData)) - 1));
       ++currentFrame;
     }
 

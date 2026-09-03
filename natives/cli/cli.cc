@@ -234,7 +234,7 @@ int main(int argc, char *argv[]) {
     esmb_media_process(function.c_str(), args.flags, inType.c_str(), outType.c_str(), data.data(), data.size());
 
   std::ofstream output(out, std::ios::binary);
-  output.write(reinterpret_cast<const char *>(result->buf), result->length);
+  output.write(static_cast<const char *>(result->buf), result->length);
 
   esmb_media_free_result(result);
   return 0;

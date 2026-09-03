@@ -8,7 +8,7 @@ using namespace vips;
 CmdOutput esmb::Image::ToGif(const string &type, string &outType, const char *bufferdata, size_t bufferLength,
                              [[maybe_unused]] esmb::ArgumentMap arguments, bool *shouldKill) {
   if (type == "gif") {
-    char *data = reinterpret_cast<char *>(malloc(bufferLength));
+    char *data = static_cast<char *>(malloc(bufferLength));
     memcpy(data, bufferdata, bufferLength);
 
     return {data, bufferLength};
