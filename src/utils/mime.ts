@@ -8,6 +8,7 @@ export function mimeToExt(mime: string) {
       return "jpg";
     case "image/webp":
       return "webp";
+    case "image/heif": // avif files can sometimes be misdetected as regular heif
     case "image/avif":
       return "avif";
     default:

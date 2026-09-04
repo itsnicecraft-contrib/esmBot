@@ -20,7 +20,7 @@ interface ServerConfig {
 }
 
 export const formats = {
-  image: ["image/jpeg", "image/png", "image/webp", "image/gif", "image/avif"],
+  image: ["image/jpeg", "image/png", "image/webp", "image/gif", "image/avif", "image/heif"],
 };
 export const connections = new Map<string, MediaConnection>();
 export let servers: ServerConfig[] = [];
